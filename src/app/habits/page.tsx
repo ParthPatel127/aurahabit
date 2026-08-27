@@ -19,13 +19,19 @@ export default function HabitsPage() {
   const currentHour = now.getHours();
   const todayStr = formatDate();
 
-  // Yesterday date calculation for 8-Hour Grace Period
+  // Yesterday date calculation for 8-Hour Grace Period (Local Timezone Aware)
   const yesterdayDate = new Date(now);
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterdayStr = yesterdayDate.toISOString().split("T")[0];
+  const yesterdayStr = formatDate(yesterdayDate);
 
   const isGracePeriodActive = currentHour < 8;
   const [activeDateTab, setActiveDateTab] = useState<string>(todayStr);
+
+  useEffect(() => {
+    if (!isGracePeriodActive) {
+      setActiveDateTab(todayStr);
+    }
+  }, [isGracePeriodActive, todayStr]);
 
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);

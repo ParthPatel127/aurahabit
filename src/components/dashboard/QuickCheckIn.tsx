@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, Flame, Target, Moon, Clock } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -20,14 +20,20 @@ export function QuickCheckIn({ habits, onRefresh }: { habits: HabitItem[]; onRef
   const currentHour = now.getHours();
   const todayStr = formatDate();
 
-  // Calculate yesterday date for 8-hour Grace Period
+  // Calculate yesterday date for 8-hour Grace Period (Local Timezone Aware)
   const yesterdayDate = new Date(now);
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterdayStr = yesterdayDate.toISOString().split("T")[0];
+  const yesterdayStr = formatDate(yesterdayDate);
 
   // Grace Period active between 00:00 AM and 08:00 AM
   const isGracePeriodActive = currentHour < 8;
   const [activeDateTab, setActiveDateTab] = useState<string>(todayStr);
+
+  useEffect(() => {
+    if (!isGracePeriodActive) {
+      setActiveDateTab(todayStr);
+    }
+  }, [isGracePeriodActive, todayStr]);
 
   const toggleCompletion = async (habitId: string, currentStatus: boolean) => {
     setLoadingId(habitId);
