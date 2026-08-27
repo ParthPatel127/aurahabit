@@ -99,6 +99,16 @@ export function YearlyMatrixGrid({ habits, categories, onRefresh }: { habits: Ha
     const habit = habits.find((h) => h.id === habitId);
     const existing = habit?.completions.find((c) => c.date === dateStr);
     const currentCompleted = existing?.completed || false;
+    const nextCompleted = !currentCompleted;
+
+    // Optimistically update local state for instant tick responsiveness
+    if (habit) {
+      if (existing) {
+        existing.completed = nextCompleted;
+      } else {
+        habit.completions.push({ date: dateStr, completed: nextCompleted });
+      }
+    }
 
     try {
       await fetch("/api/habits/completions", {
@@ -107,7 +117,7 @@ export function YearlyMatrixGrid({ habits, categories, onRefresh }: { habits: Ha
         body: JSON.stringify({
           habitId,
           date: dateStr,
-          completed: !currentCompleted,
+          completed: nextCompleted,
         }),
       });
       onRefresh();
