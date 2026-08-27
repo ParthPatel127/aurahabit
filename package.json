@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "DATABASE_URL=\"${DATABASE_URL:-file:./dev.db}\" NEXTAUTH_URL=\"${NEXTAUTH_URL:-http://localhost:3000}\" NEXTAUTH_SECRET=\"${NEXTAUTH_SECRET:-super-secret-habit-tracker-key-2026}\" prisma db push --accept-data-loss && node scripts/seed.js && next dev -H 0.0.0.0",
-    "build": "DATABASE_URL=\"${DATABASE_URL:-file:./dev.db}\" NEXTAUTH_URL=\"${NEXTAUTH_URL:-http://localhost:3000}\" NEXTAUTH_SECRET=\"${NEXTAUTH_SECRET:-super-secret-habit-tracker-key-2026}\" prisma generate && DATABASE_URL=\"${DATABASE_URL:-file:./dev.db}\" NEXTAUTH_URL=\"${NEXTAUTH_URL:-http://localhost:3000}\" NEXTAUTH_SECRET=\"${NEXTAUTH_SECRET:-super-secret-habit-tracker-key-2026}\" prisma db push --accept-data-loss && DATABASE_URL=\"${DATABASE_URL:-file:./dev.db}\" NEXTAUTH_URL=\"${NEXTAUTH_URL:-http://localhost:3000}\" NEXTAUTH_SECRET=\"${NEXTAUTH_SECRET:-super-secret-habit-tracker-key-2026}\" node scripts/seed.js && NEXTAUTH_URL=\"${NEXTAUTH_URL:-http://localhost:3000}\" NEXTAUTH_SECRET=\"${NEXTAUTH_SECRET:-super-secret-habit-tracker-key-2026}\" next build",
-    "start": "DATABASE_URL=\"${DATABASE_URL:-file:./dev.db}\" NEXTAUTH_URL=\"${NEXTAUTH_URL:-http://localhost:3000}\" NEXTAUTH_SECRET=\"${NEXTAUTH_SECRET:-super-secret-habit-tracker-key-2026}\" prisma db push --accept-data-loss && node scripts/seed.js && next start -H 0.0.0.0 || next dev -H 0.0.0.0",
+    "dev": "prisma db push && node scripts/seed.js && next dev -H 0.0.0.0",
+    "build": "prisma generate && prisma db push --accept-data-loss && node scripts/seed.js && next build",
+    "start": "prisma db push && node scripts/seed.js && next start -H 0.0.0.0 || next dev -H 0.0.0.0",
     "postinstall": "prisma generate"
   },
   "dependencies": {
