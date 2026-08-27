@@ -1,0 +1,193 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id               String            @id @default(cuid())
+  email            String            @unique
+  name             String?
+  password         String
+  image            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  habits           Habit[]
+  categories       HabitCategory[]
+  goals            Goal[]
+  plannerTasks     PlannerTask[]
+  waterLogs        WaterLog[]
+  studyLogs        StudyLog[]
+  workoutLogs      WorkoutLog[]
+  visionItems      VisionBoardItem[]
+  settings         UserSettings?
+}
+
+model HabitCategory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  color     String   @default("#10B981")
+  icon      String   @default("CheckCircle")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  habits    Habit[]
+}
+
+model Habit {
+  id           String            @id @default(cuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId   String?
+  category     HabitCategory?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  name         String
+  description  String?
+  color        String            @default("#10B981")
+  icon         String            @default("Target")
+  frequency    String            @default("DAILY") // DAILY, WEEKLY, MONTHLY, CUSTOM
+  scheduleDays String            @default("1,2,3,4,5,6,7") // Comma-separated days 1-7
+  targetDays   Int               @default(1)
+  archived     Boolean           @default(false)
+  reminderTime String?           // e.g. "08:00"
+  timeSlot     String?           // e.g. "08:00 AM - 09:00 AM"
+  startTime    String?           // e.g. "08:00"
+  endTime      String?           // e.g. "09:00"
+  order        Int               @default(0)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  completions  HabitCompletion[]
+}
+
+model HabitCompletion {
+  id        String   @id @default(cuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  date      String   // Format YYYY-MM-DD
+  completed Boolean  @default(true)
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@unique([habitId, date])
+}
+
+model Goal {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  description     String?
+  timeframe       String   @default("YEARLY") // YEARLY, QUARTERLY, MONTHLY, WEEKLY
+  targetDate      String?  // YYYY-MM-DD
+  status          String   @default("IN_PROGRESS") // NOT_STARTED, IN_PROGRESS, COMPLETED
+  progress        Int      @default(0) // 0 - 100 percentage
+  loggedDays      Int      @default(0)
+  targetDays      Int      @default(365)
+  lastCheckinDate String?  // Format YYYY-MM-DD (limits +1 day checkin to once per day)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model PlannerTask {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String   // YYYY-MM-DD
+  title     String
+  priority  Int      @default(1) // 1 = Top Priority, 2 = Task 2, etc.
+  completed Boolean  @default(false)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WaterLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date       String   // YYYY-MM-DD
+  amountMl   Int      @default(0)
+  goalMl     Int      @default(3000)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, date])
+}
+
+model StudyLog {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            String   // YYYY-MM-DD
+  subject         String
+  durationMinutes Int      @default(0)
+  topicsCompleted String?
+  pomodoroCount   Int      @default(0)
+  notes           String?
+  createdAt       DateTime @default(now())
+}
+
+model WorkoutLog {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            String   // YYYY-MM-DD
+  workoutType     String
+  durationMinutes Int      @default(0)
+  caloriesBurned  Int      @default(0)
+  notes           String?
+  createdAt       DateTime @default(now())
+}
+
+model Quote {
+  id                 String   @id @default(cuid())
+  dayOfYear          Int      @unique // 1 - 365
+  sanskritVerse      String
+  englishTranslation String
+  explanation        String?
+  chapter            Int
+  verse              Int
+}
+
+model GitaVerse {
+  id                 String   @id @default(cuid())
+  chapterNumber      Int
+  verseNumber        Int
+  sanskritText       String
+  englishTranslation String
+  explanation        String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([chapterNumber, verseNumber])
+}
+
+model VisionBoardItem {
+  id                    String   @id @default(cuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title                 String
+  imageUrl              String
+  category              String?  @default("Life")
+  motivationalStatement String?
+  targetDate            String?
+  createdAt             DateTime @default(now())
+}
+
+model UserSettings {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme                 String   @default("system") // light, dark, system
+  reminderNotifications Boolean  @default(true)
+  showTimeSlots         Boolean  @default(false)
+  dailyWaterGoal        Int      @default(3000)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
