@@ -26,13 +26,21 @@ export function NotificationScheduler() {
         .then((reg) => {
           swRegRef.current = reg;
           console.log("Service Worker registered for background push notifications");
+
+          if ("Notification" in window && Notification.permission === "granted") {
+            subscribeToPushNotifications(reg);
+          }
         })
         .catch((err) => console.error("SW registration error:", err));
     }
 
     // Auto-request Notification permission
     if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
+      Notification.requestPermission().then((perm) => {
+        if (perm === "granted" && swRegRef.current) {
+          subscribeToPushNotifications(swRegRef.current);
+        }
+      });
     }
 
     // Expose global helper for instant on-demand desktop & in-app testing
@@ -40,6 +48,40 @@ export function NotificationScheduler() {
       sendSystemNotification(title, body, "test_notification");
     };
   }, []);
+
+  const subscribeToPushNotifications = async (reg: ServiceWorkerRegistration) => {
+    try {
+      if (!("PushManager" in window)) return;
+      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BF2mwhYFvnkCk2K9b8SBfu5l2KwzJ2T8ugWAWIHr_PssXJCUlsrpQlEn6yBCq2BQjNItim9uRqSOIek4Ar2CTQc";
+
+      const padding = "=".repeat((4 - (vapidPublicKey.length % 4)) % 4);
+      const base64 = (vapidPublicKey + padding).replace(/\-/g, "+").replace(/_/g, "/");
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: outputArray,
+        });
+      }
+
+      if (sub) {
+        await fetch("/api/notifications/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscription: sub }),
+        });
+        console.log("Registered for closed-tab background Web Push notifications!");
+      }
+    } catch (e) {
+      console.warn("Push subscription failed:", e);
+    }
+  };
 
   const sendSystemNotification = async (title: string, body: string, tag: string) => {
     // 1. Always trigger guaranteed In-App Banner Toast Popup
@@ -77,6 +119,13 @@ export function NotificationScheduler() {
           requireInteraction: true,
         });
       }
+
+      // 3. Trigger Server Web Push for closed-tab background delivery
+      fetch("/api/notifications/send-push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, body, tag }),
+      }).catch(() => {});
     } catch (e) {
       console.error("System notification error:", e);
     }
