@@ -25,21 +25,24 @@ export async function POST(req: Request) {
     }
 
     // Strict Date Locking Rule:
-    // Only Today is allowed, or Yesterday before 8:00 AM (8-hour grace period).
-    const now = new Date();
-    const todayStr = now.toISOString().split("T")[0];
-
-    const yesterdayObj = new Date(now);
-    yesterdayObj.setDate(yesterdayObj.getDate() - 1);
-    const yesterdayStr = yesterdayObj.toISOString().split("T")[0];
-
-    const currentHour = now.getHours();
-
+    // Today is ALWAYS allowed. Yesterday is allowed before 8:00 AM. Future & older past dates are locked.
+    const parts = date.split("-").map(Number);
     let isEditable = false;
-    if (date === todayStr) {
-      isEditable = true;
-    } else if (date === yesterdayStr && currentHour < 8) {
-      isEditable = true;
+
+    if (parts.length === 3) {
+      const [cYear, cMonth, cDay] = parts;
+      const now = new Date();
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const targetMidnight = new Date(cYear, cMonth - 1, cDay);
+
+      const diffMs = todayMidnight.getTime() - targetMidnight.getTime();
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) {
+        isEditable = true; // Today is always editable
+      } else if (diffDays === 1 && now.getHours() < 8) {
+        isEditable = true; // Yesterday is editable before 8:00 AM
+      }
     }
 
     if (!isEditable) {

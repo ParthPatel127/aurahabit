@@ -22,18 +22,24 @@ const MONTHS = [
 
 export function YearlyMatrixGrid({ habits, categories, onRefresh }: { habits: HabitItem[]; categories: any[]; onRefresh: () => void }) {
   const now = new Date();
-  const currentHour = now.getHours();
-  const todayStr = now.toISOString().split("T")[0];
 
-  const yesterdayObj = new Date(now);
-  yesterdayObj.setDate(yesterdayObj.getDate() - 1);
-  const yesterdayStr = yesterdayObj.toISOString().split("T")[0];
-
-  // Date Locking Rule: Only Today is editable, or Yesterday before 8:00 AM
+  // Date Locking Rule: Today is ALWAYS unlocked. Yesterday is unlocked until 8:00 AM. Future & older past dates are locked.
   const isEditableDate = (dateStr: string) => {
-    if (dateStr === todayStr) return true;
-    if (dateStr === yesterdayStr && currentHour < 8) return true;
-    return false;
+    const parts = dateStr.split("-").map(Number);
+    if (parts.length !== 3) return false;
+    const [cYear, cMonth, cDay] = parts;
+
+    const now = new Date();
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const targetMidnight = new Date(cYear, cMonth - 1, cDay);
+
+    const diffMs = todayMidnight.getTime() - targetMidnight.getTime();
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return true; // Today is always unlocked
+    if (diffDays === 1 && now.getHours() < 8) return true; // Yesterday is unlocked before 8:00 AM
+
+    return false; // Locked for future dates (diffDays < 0) or past dates older than 8 AM yesterday (diffDays >= 1)
   };
 
   const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
