@@ -145,16 +145,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-center space-y-3">
-          <button
-            onClick={handleDemoLogin}
-            disabled={loading}
-            className="w-full py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-700 dark:text-amber-400 font-bold text-xs flex items-center justify-center gap-2"
-          >
-            <Sparkles className="w-4 h-4" />
-            1-Click Demo Login (demo@habittracker.com)
-          </button>
-
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Don't have an account?{" "}
             <Link href="/register" className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
