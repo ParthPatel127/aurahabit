@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Tag } from "lucide-react";
-
 interface CategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -29,6 +29,7 @@ export function CategoryModal({ isOpen, onClose, onSuccess }: CategoryModalProps
       });
 
       if (res.ok) {
+        setName("");
         onSuccess();
       }
     } catch (e) {
@@ -40,11 +41,26 @@ export function CategoryModal({ isOpen, onClose, onSuccess }: CategoryModalProps
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-6 relative">
+  if (typeof window === "undefined") return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-100"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
+    >
+      <div
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-6 relative shadow-2xl animate-in zoom-in-95 duration-150"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
-          onClick={onClose}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
           className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
         >
           <X className="w-5 h-5" />
@@ -90,7 +106,10 @@ export function CategoryModal({ isOpen, onClose, onSuccess }: CategoryModalProps
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
               className="px-3 py-1.5 text-xs text-slate-500 font-semibold"
             >
               Cancel
@@ -105,6 +124,7 @@ export function CategoryModal({ isOpen, onClose, onSuccess }: CategoryModalProps
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
