@@ -89,6 +89,27 @@ export function SettingsView({ habits, goals, plannerTasks }: { habits: any[]; g
     }
   };
 
+  const handleTestClosedTabPush = async () => {
+    try {
+      // Trigger background VAPID Web Push after 3 seconds delay so user can close tab to test
+      alert("Closed-Tab Test Triggered! Click OK and CLOSE THIS TAB right now within 3 seconds.");
+      setTimeout(async () => {
+        await fetch("/api/notifications/send-push", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: "Closed-Tab Push Test 🚀",
+            body: "Success! You received this notification via VAPID Web Push while the app tab was CLOSED!",
+            tag: "closed_tab_test",
+            url: "/dashboard",
+          }),
+        });
+      }, 3000);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Yearly Matrix Time Slots Setting */}
@@ -241,6 +262,15 @@ export function SettingsView({ habits, goals, plannerTasks }: { habits: any[]; g
             >
               <Send className="w-3.5 h-3.5" />
               Test Notification Now
+            </button>
+
+            <button
+              onClick={handleTestClosedTabPush}
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+              title="Click, then immediately close your browser tab to test receiving notifications while app is closed!"
+            >
+              <Send className="w-3.5 h-3.5" />
+              Test Closed-Tab Push (3s Delay)
             </button>
           </div>
         </div>
