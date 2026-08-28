@@ -20,17 +20,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Forgot Password Modal States
+  // Forgot Password Wizard States (Step 1: Email -> Step 2: OTP -> Step 3: New Password -> Step 4: Success)
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [step, setStep] = useState<1 | 2>(1); // Step 1: Request Code, Step 2: Verify Code & Change Password
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3 | 4>(1);
   const [resetEmail, setResetEmail] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
+  const [otpCode, setOtpCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState("");
-  const [resetSuccess, setResetSuccess] = useState("");
-  const [codeNotice, setCodeNotice] = useState("");
+  const [otpBanner, setOtpBanner] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,22 +57,21 @@ export default function LoginPage() {
   };
 
   const handleOpenForgotModal = () => {
-    setStep(1);
+    setWizardStep(1);
     setResetEmail(email || "");
-    setVerificationCode("");
+    setOtpCode("");
     setNewPassword("");
     setConfirmPassword("");
     setResetError("");
-    setResetSuccess("");
-    setCodeNotice("");
+    setOtpBanner("");
     setShowForgotModal(true);
   };
 
-  // Step 1: Request 6-digit verification code
-  const handleRequestCode = async (e: React.FormEvent) => {
+  // STEP 1: Send 6-digit OTP to Email
+  const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setResetError("");
-    setCodeNotice("");
+    setOtpBanner("");
 
     if (!resetEmail) {
       setResetError("Please enter your registered email address.");
@@ -92,31 +90,60 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setResetError(data.error || "Account not found or failed to request code.");
+        setResetError(data.error || "Account not found or failed to send OTP.");
       } else {
         if (data.code) {
-          setVerificationCode(data.code);
-          setCodeNotice(`Security Verification Code: ${data.code} (Valid for 15 mins)`);
+          setOtpBanner(`Your OTP Code is: ${data.code} (Valid for 15 mins)`);
         }
-        setStep(2);
+        setWizardStep(2);
       }
     } catch (err: any) {
-      setResetError("Failed to request verification code.");
+      setResetError("Failed to request OTP code.");
     } finally {
       setResetLoading(false);
     }
   };
 
-  // Step 2: Verify code & update password securely
-  const handleVerifyAndUpdatePassword = async (e: React.FormEvent) => {
+  // STEP 2: Verify 6-digit OTP Code
+  const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setResetError("");
-    setResetSuccess("");
 
-    if (!verificationCode) {
-      setResetError("Please enter the 6-digit verification code.");
+    if (!otpCode || otpCode.trim().length !== 6) {
+      setResetError("Please enter a valid 6-digit OTP code.");
       return;
     }
+
+    setResetLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/reset-password/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: resetEmail,
+          code: otpCode.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setResetError(data.error || "Invalid or expired OTP code.");
+      } else {
+        setWizardStep(3);
+      }
+    } catch (err: any) {
+      setResetError("An error occurred while verifying the OTP code.");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  // STEP 3: Submit New Password & Confirm Password
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetError("");
 
     if (newPassword.length < 6) {
       setResetError("New password must be at least 6 characters long.");
@@ -124,7 +151,7 @@ export default function LoginPage() {
     }
 
     if (newPassword !== confirmPassword) {
-      setResetError("Passwords do not match.");
+      setResetError("New password and confirm password do not match.");
       return;
     }
 
@@ -136,7 +163,7 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: resetEmail,
-          code: verificationCode,
+          code: otpCode.trim(),
           newPassword: newPassword,
         }),
       });
@@ -144,14 +171,15 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setResetError(data.error || "Failed to verify code or update password.");
+        setResetError(data.error || "Failed to update password.");
       } else {
-        setResetSuccess(data.message || "Password updated successfully!");
+        // Pre-fill login email and password
         setEmail(resetEmail);
         setPassword(newPassword);
+        setWizardStep(4);
       }
     } catch (err: any) {
-      setResetError("An error occurred while setting your new password.");
+      setResetError("An error occurred while resetting your password.");
     } finally {
       setResetLoading(false);
     }
@@ -258,7 +286,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Secure 2-Step Verification Password Reset Modal */}
+      {/* Forgot Password 3-Step Wizard Modal */}
       {showForgotModal && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 relative">
@@ -269,16 +297,37 @@ export default function LoginPage() {
               <X className="w-5 h-5" />
             </button>
 
+            {/* Wizard Header Progress */}
             <div className="text-center mb-6">
               <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3">
-                <ShieldCheck className="w-6 h-6" />
+                {wizardStep === 1 && <Mail className="w-6 h-6" />}
+                {wizardStep === 2 && <KeyRound className="w-6 h-6" />}
+                {wizardStep === 3 && <Lock className="w-6 h-6" />}
+                {wizardStep === 4 && <CheckCircle2 className="w-6 h-6 text-emerald-500" />}
               </div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Secure Password Reset</h2>
+
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                {wizardStep === 1 && "Forgot Password"}
+                {wizardStep === 2 && "Enter OTP Code"}
+                {wizardStep === 3 && "Set New Password"}
+                {wizardStep === 4 && "Password Reset Successful"}
+              </h2>
+
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {step === 1
-                  ? "Enter your email to receive a 6-digit security code"
-                  : `Verification code generated for ${resetEmail}`}
+                {wizardStep === 1 && "Step 1 of 3: Enter your registered email address to receive a 6-digit OTP code."}
+                {wizardStep === 2 && `Step 2 of 3: Enter the 6-digit OTP code sent to ${resetEmail}`}
+                {wizardStep === 3 && "Step 3 of 3: Enter your new password and confirm it."}
+                {wizardStep === 4 && "Your password has been updated! Click below to sign in."}
               </p>
+
+              {/* Step indicator bar */}
+              {wizardStep < 4 && (
+                <div className="flex items-center justify-center gap-1.5 mt-4">
+                  <div className={`h-1.5 rounded-full transition-all duration-300 ${wizardStep >= 1 ? "w-8 bg-emerald-500" : "w-3 bg-slate-200 dark:bg-slate-800"}`} />
+                  <div className={`h-1.5 rounded-full transition-all duration-300 ${wizardStep >= 2 ? "w-8 bg-emerald-500" : "w-3 bg-slate-200 dark:bg-slate-800"}`} />
+                  <div className={`h-1.5 rounded-full transition-all duration-300 ${wizardStep >= 3 ? "w-8 bg-emerald-500" : "w-3 bg-slate-200 dark:bg-slate-800"}`} />
+                </div>
+              )}
             </div>
 
             {resetError && (
@@ -287,33 +336,9 @@ export default function LoginPage() {
               </div>
             )}
 
-            {codeNotice && (
-              <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold text-center flex items-center justify-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>{codeNotice}</span>
-              </div>
-            )}
-
-            {resetSuccess ? (
-              <div className="space-y-4 text-center">
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-medium space-y-2">
-                  <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-500" />
-                  <p className="font-semibold">{resetSuccess}</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Your password has been securely updated. You can now log in!
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowForgotModal(false)}
-                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <ArrowLeft className="w-4 h-4" /> Back to Sign In
-                </button>
-              </div>
-            ) : step === 1 ? (
-              /* Step 1: Send Verification Code */
-              <form onSubmit={handleRequestCode} className="space-y-4">
+            {/* STEP 1: Enter Email */}
+            {wizardStep === 1 && (
+              <form onSubmit={handleSendOTP} className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Registered Email Address
@@ -344,17 +369,26 @@ export default function LoginPage() {
                     disabled={resetLoading}
                     className="w-2/3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {resetLoading ? "Sending..." : "Get Security Code"}
+                    {resetLoading ? "Sending OTP..." : "Send OTP Code"}
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </form>
-            ) : (
-              /* Step 2: Verify Code & Enter New Password */
-              <form onSubmit={handleVerifyAndUpdatePassword} className="space-y-4">
+            )}
+
+            {/* STEP 2: Enter & Verify OTP */}
+            {wizardStep === 2 && (
+              <form onSubmit={handleVerifyOTP} className="space-y-4">
+                {otpBanner && (
+                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold text-center flex items-center justify-center gap-2">
+                    <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>{otpBanner}</span>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    6-Digit Security Verification Code
+                    Enter 6-Digit Security OTP
                   </label>
                   <div className="relative">
                     <KeyRound className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 dark:text-slate-500" />
@@ -363,13 +397,36 @@ export default function LoginPage() {
                       required
                       maxLength={6}
                       placeholder="e.g. 849201"
-                      value={verificationCode}
-                      onChange={(e) => setVerificationCode(e.target.value)}
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-mono text-sm tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                 </div>
 
+                <div className="pt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setWizardStep(1)}
+                    className="w-1/3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Change Email
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={resetLoading}
+                    className="w-2/3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {resetLoading ? "Verifying OTP..." : "Verify OTP Code"}
+                    <ShieldCheck className="w-4 h-4" />
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* STEP 3: Enter New Password & Confirm Password */}
+            {wizardStep === 3 && (
+              <form onSubmit={handleResetPassword} className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     New Password
@@ -407,21 +464,41 @@ export default function LoginPage() {
                 <div className="pt-2 flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setStep(1)}
+                    onClick={() => setWizardStep(2)}
                     className="w-1/3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-1"
                   >
-                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back to OTP
                   </button>
                   <button
                     type="submit"
                     disabled={resetLoading}
                     className="w-2/3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {resetLoading ? "Verifying..." : "Confirm & Reset"}
-                    <ShieldCheck className="w-4 h-4" />
+                    {resetLoading ? "Updating..." : "Reset Password"}
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </form>
+            )}
+
+            {/* STEP 4: Success & Auto-Fill Sign In */}
+            {wizardStep === 4 && (
+              <div className="space-y-4 text-center">
+                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-medium space-y-2">
+                  <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500" />
+                  <p className="font-semibold text-sm">Password Reset Complete!</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Your password has been updated securely. Your login details have been pre-filled below.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(false)}
+                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <ArrowRight className="w-4 h-4" /> Sign In Now
+                </button>
+              </div>
             )}
           </div>
         </div>
