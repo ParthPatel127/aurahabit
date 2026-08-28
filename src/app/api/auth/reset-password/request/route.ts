@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendOtpEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   try {
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Generate cryptographically secure 6-digit verification code
+    // Generate 6-digit verification OTP code
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes validity
 
@@ -43,10 +44,16 @@ export async function POST(req: Request) {
       },
     });
 
+    // Dispatch real email via Nodemailer
+    const emailResult = await sendOtpEmail(normalizedEmail, verificationCode);
+
     return NextResponse.json({
       success: true,
-      message: "Verification code sent successfully!",
-      code: verificationCode, // Returned for instant demo testing and copy-paste
+      message: emailResult.sent
+        ? `A 6-digit OTP code has been sent to ${normalizedEmail}. Please check your inbox!`
+        : `Verification code generated! (OTP: ${verificationCode})`,
+      code: verificationCode, // Available for instant preview/testing
+      emailSent: emailResult.sent,
     });
   } catch (error: any) {
     console.error("Password reset request error:", error);
