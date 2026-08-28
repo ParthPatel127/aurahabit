@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ListTodo, CheckSquare, Plus, Trash2, Calendar, Star, FileText, GripVertical } from "lucide-react";
+import { ListTodo, CheckSquare, Plus, Trash2, Calendar, Star, FileText, GripVertical, Moon, Sun, ArrowRight } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
 interface TaskItem {
@@ -14,11 +14,20 @@ interface TaskItem {
 }
 
 export function PlannerBoard() {
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return formatDate(tomorrow);
-  });
+  const now = new Date();
+
+  const todayDate = new Date(now);
+  const todayStr = formatDate(todayDate);
+
+  const yesterdayDate = new Date(now);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterdayStr = formatDate(yesterdayDate);
+
+  const tomorrowDate = new Date(now);
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrowStr = formatDate(tomorrowDate);
+
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr);
 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -153,28 +162,56 @@ export function PlannerBoard() {
   return (
     <div className="space-y-6">
       {/* Date Header */}
-      <div className="glass-card p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-bold text-base">
-          <Calendar className="w-5 h-5 text-emerald-500" />
-          <span>Plan for:</span>
+      <div className="glass-card p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Quick Date Selection Tabs */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setSelectedDate(yesterdayStr)}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              selectedDate === yesterdayStr
+                ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
+                : "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 hover:bg-purple-500/20"
+            }`}
+          >
+            <Moon className="w-3.5 h-3.5" />
+            <span>Yesterday ({yesterdayStr})</span>
+          </button>
+
+          <button
+            onClick={() => setSelectedDate(todayStr)}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              selectedDate === todayStr
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+            }`}
+          >
+            Today ({todayStr})
+          </button>
+
+          <button
+            onClick={() => setSelectedDate(tomorrowStr)}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              selectedDate === tomorrowStr
+                ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20"
+            }`}
+          >
+            <Sun className="w-3.5 h-3.5" />
+            <span>Tomorrow ({tomorrowStr})</span>
+          </button>
+        </div>
+
+        {/* Date Input Selector */}
+        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-bold text-xs">
+          <Calendar className="w-4 h-4 text-emerald-500" />
+          <span>Specific Date:</span>
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1 text-sm font-semibold focus:outline-none"
+            className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1 text-xs font-semibold focus:outline-none"
           />
         </div>
-
-        <button
-          onClick={() => {
-            const tmw = new Date();
-            tmw.setDate(tmw.getDate() + 1);
-            setSelectedDate(formatDate(tmw));
-          }}
-          className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
-        >
-          Set to Tomorrow
-        </button>
       </div>
 
       {/* 5 Priority Tasks Matrix with Drag and Drop */}
@@ -182,7 +219,15 @@ export function PlannerBoard() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <ListTodo className="w-5 h-5 text-emerald-500" />
-            Tomorrow's 5 Priority Execution Matrix
+            <span>
+              {selectedDate === yesterdayStr
+                ? "Yesterday's 5 Priority Execution Matrix 🌙"
+                : selectedDate === todayStr
+                ? "Today's 5 Priority Execution Matrix ⚡"
+                : selectedDate === tomorrowStr
+                ? "Tomorrow's 5 Priority Execution Matrix ⭐"
+                : `5 Priority Execution Matrix (${selectedDate})`}
+            </span>
           </h2>
           <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
             💡 Drag & drop grip handles to swap task priorities!
