@@ -234,8 +234,8 @@ export function YearlyMatrixGrid({ habits, categories, onRefresh }: { habits: Ha
       </div>
 
       {/* Yearly Matrix Excel Grid */}
-      <div className="glass-card p-4 overflow-hidden relative">
-        <div className="overflow-x-auto">
+      <div className="glass-card p-4 relative">
+        <div className="overflow-x-auto pt-8">
           <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
               <tr className="border-b border-slate-200/80 dark:border-slate-800 text-xs text-slate-500 font-semibold">
@@ -304,21 +304,20 @@ export function YearlyMatrixGrid({ habits, categories, onRefresh }: { habits: Ha
                             className="w-2.5 h-2.5 rounded-full shrink-0"
                             style={{ backgroundColor: habit.color || "#10B981" }}
                           />
-                          <span className="truncate max-w-[180px]" title={habit.name}>
+                          <span className="truncate max-w-[180px]">
                             {habit.name}
                           </span>
                         </div>
 
                         {/* Floating Mouse Hover Popup Tooltip */}
                         {hoveredHabitId === habit.id && (
-                          <div className="absolute left-full top-0 ml-2 w-64 p-3 rounded-xl bg-slate-900 text-white text-xs shadow-2xl z-50 border border-purple-500/30 pointer-events-none animate-in fade-in zoom-in-95">
-                            <div className="flex items-center gap-1.5 mb-1 pb-1 border-b border-slate-800 font-bold text-emerald-400">
+                          <div className="absolute left-2 bottom-full mb-2 w-64 p-3 rounded-xl bg-slate-900/95 dark:bg-slate-900/98 text-white text-xs shadow-2xl z-[100] border border-purple-500/40 backdrop-blur-md pointer-events-none animate-in fade-in zoom-in-95">
+                            <div className="flex items-center gap-1.5 mb-1.5 pb-1 border-b border-slate-800 font-bold text-emerald-400">
                               <Clock className="w-3.5 h-3.5 text-purple-400" />
                               <span>{habit.name} Schedule</span>
                             </div>
                             <div className="space-y-1 text-[11px] text-slate-300">
                               <p><span className="font-bold text-purple-400">Time Slot:</span> {slotText || "Not set"}</p>
-                              <p><span className="font-bold text-amber-400">Alert Time:</span> {habit.reminderTime ? `⏰ ${habit.reminderTime}` : "No alert time"}</p>
                               <p><span className="font-bold text-teal-400">Category:</span> {habit.category?.name || "Uncategorized"}</p>
                             </div>
                           </div>
