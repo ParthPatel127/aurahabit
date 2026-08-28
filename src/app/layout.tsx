@@ -13,8 +13,13 @@ export const metadata: Metadata = {
   description: "Production-grade Habit Tracker, Goal Tracker, Bhagavad Gita Daily Inspiration inspired by Notion, Habitify & TickTick.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/logo.png",
   },
 };
 

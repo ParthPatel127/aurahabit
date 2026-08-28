@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "prisma db push && node scripts/seed.js && next dev -H 0.0.0.0",
-    "build": "prisma generate && prisma db push --accept-data-loss && node scripts/seed.js && next build",
-    "start": "prisma db push && node scripts/seed.js && next start -H 0.0.0.0 || next dev -H 0.0.0.0",
+    "dev": "npx prisma db push && node scripts/seed.js && next dev -H 0.0.0.0",
+    "build": "npx prisma generate && npx prisma db push --accept-data-loss && node scripts/seed.js && next build",
+    "start": "npx prisma db push && node scripts/seed.js && next start -H 0.0.0.0 || next dev -H 0.0.0.0",
     "postinstall": "prisma generate"
   },
   "dependencies": {
