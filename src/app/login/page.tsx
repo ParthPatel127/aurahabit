@@ -6,7 +6,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Lock, Mail, Sparkles, ArrowRight, Sun, Moon, KeyRound, CheckCircle2, ArrowLeft, X } from "lucide-react";
+import { Lock, Mail, Sparkles, ArrowRight, Sun, Moon, KeyRound, CheckCircle2, ArrowLeft, X, ShieldCheck, RefreshCw } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
 export default function LoginPage() {
@@ -22,12 +22,15 @@ export default function LoginPage() {
 
   // Forgot Password Modal States
   const [showForgotModal, setShowForgotModal] = useState(false);
+  const [step, setStep] = useState<1 | 2>(1); // Step 1: Request Code, Step 2: Verify Code & Change Password
   const [resetEmail, setResetEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState("");
   const [resetSuccess, setResetSuccess] = useState("");
+  const [codeNotice, setCodeNotice] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,21 +58,63 @@ export default function LoginPage() {
   };
 
   const handleOpenForgotModal = () => {
+    setStep(1);
     setResetEmail(email || "");
+    setVerificationCode("");
     setNewPassword("");
     setConfirmPassword("");
     setResetError("");
     setResetSuccess("");
+    setCodeNotice("");
     setShowForgotModal(true);
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
+  // Step 1: Request 6-digit verification code
+  const handleRequestCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetError("");
+    setCodeNotice("");
+
+    if (!resetEmail) {
+      setResetError("Please enter your registered email address.");
+      return;
+    }
+
+    setResetLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/reset-password/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resetEmail }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setResetError(data.error || "Account not found or failed to request code.");
+      } else {
+        if (data.code) {
+          setVerificationCode(data.code);
+          setCodeNotice(`Security Verification Code: ${data.code} (Valid for 15 mins)`);
+        }
+        setStep(2);
+      }
+    } catch (err: any) {
+      setResetError("Failed to request verification code.");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  // Step 2: Verify code & update password securely
+  const handleVerifyAndUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setResetError("");
     setResetSuccess("");
 
-    if (!resetEmail) {
-      setResetError("Please enter your registered email address.");
+    if (!verificationCode) {
+      setResetError("Please enter the 6-digit verification code.");
       return;
     }
 
@@ -86,11 +131,12 @@ export default function LoginPage() {
     setResetLoading(true);
 
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const res = await fetch("/api/auth/reset-password/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: resetEmail,
+          code: verificationCode,
           newPassword: newPassword,
         }),
       });
@@ -98,15 +144,14 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setResetError(data.error || "Failed to reset password.");
+        setResetError(data.error || "Failed to verify code or update password.");
       } else {
         setResetSuccess(data.message || "Password updated successfully!");
-        // Pre-fill login fields for immediate sign in
         setEmail(resetEmail);
         setPassword(newPassword);
       }
     } catch (err: any) {
-      setResetError("An error occurred while resetting your password.");
+      setResetError("An error occurred while setting your new password.");
     } finally {
       setResetLoading(false);
     }
@@ -213,7 +258,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Forgot Password Modal */}
+      {/* Secure 2-Step Verification Password Reset Modal */}
       {showForgotModal && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 relative">
@@ -226,11 +271,13 @@ export default function LoginPage() {
 
             <div className="text-center mb-6">
               <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3">
-                <KeyRound className="w-6 h-6" />
+                <ShieldCheck className="w-6 h-6" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Reset Password</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Secure Password Reset</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Enter your registered email and choose a new password
+                {step === 1
+                  ? "Enter your email to receive a 6-digit security code"
+                  : `Verification code generated for ${resetEmail}`}
               </p>
             </div>
 
@@ -240,28 +287,36 @@ export default function LoginPage() {
               </div>
             )}
 
+            {codeNotice && (
+              <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold text-center flex items-center justify-center gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>{codeNotice}</span>
+              </div>
+            )}
+
             {resetSuccess ? (
               <div className="space-y-4 text-center">
                 <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-medium space-y-2">
                   <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-500" />
                   <p className="font-semibold">{resetSuccess}</p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Your credentials have been updated in the login form. Click below to sign in!
+                    Your password has been securely updated. You can now log in!
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowForgotModal(false)}
-                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back to Sign In
                 </button>
               </div>
-            ) : (
-              <form onSubmit={handleResetPassword} className="space-y-4">
+            ) : step === 1 ? (
+              /* Step 1: Send Verification Code */
+              <form onSubmit={handleRequestCode} className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Registered Email
+                    Registered Email Address
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 dark:text-slate-500" />
@@ -272,6 +327,45 @@ export default function LoginPage() {
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotModal(false)}
+                    className="w-1/3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={resetLoading}
+                    className="w-2/3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {resetLoading ? "Sending..." : "Get Security Code"}
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* Step 2: Verify Code & Enter New Password */
+              <form onSubmit={handleVerifyAndUpdatePassword} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    6-Digit Security Verification Code
+                  </label>
+                  <div className="relative">
+                    <KeyRound className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 dark:text-slate-500" />
+                    <input
+                      type="text"
+                      required
+                      maxLength={6}
+                      placeholder="e.g. 849201"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-mono text-sm tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                 </div>
@@ -313,18 +407,18 @@ export default function LoginPage() {
                 <div className="pt-2 flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setShowForgotModal(false)}
-                    className="w-1/3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    onClick={() => setStep(1)}
+                    className="w-1/3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-1"
                   >
-                    Cancel
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
                   </button>
                   <button
                     type="submit"
                     disabled={resetLoading}
-                    className="w-2/3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+                    className="w-2/3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {resetLoading ? "Updating..." : "Reset Password"}
-                    <ArrowRight className="w-4 h-4" />
+                    {resetLoading ? "Verifying..." : "Confirm & Reset"}
+                    <ShieldCheck className="w-4 h-4" />
                   </button>
                 </div>
               </form>

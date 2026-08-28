@@ -202,3 +202,14 @@ model PushSubscription {
   auth      String
   createdAt DateTime @default(now())
 }
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email, code])
+}
+
