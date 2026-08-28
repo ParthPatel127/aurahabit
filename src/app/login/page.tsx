@@ -6,7 +6,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Lock, Mail, Sparkles, ArrowRight, Sun, Moon, KeyRound, CheckCircle2, ArrowLeft, X, ShieldCheck, RefreshCw } from "lucide-react";
+import { Lock, Mail, Sparkles, ArrowRight, Sun, Moon, KeyRound, CheckCircle2, ArrowLeft, X, ShieldCheck } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
 export default function LoginPage() {
@@ -29,7 +29,7 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState("");
-  const [otpBanner, setOtpBanner] = useState("");
+  const [infoMessage, setInfoMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,15 +63,15 @@ export default function LoginPage() {
     setNewPassword("");
     setConfirmPassword("");
     setResetError("");
-    setOtpBanner("");
+    setInfoMessage("");
     setShowForgotModal(true);
   };
 
-  // STEP 1: Send 6-digit OTP to Email
+  // STEP 1: Request 6-digit OTP to Email
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setResetError("");
-    setOtpBanner("");
+    setInfoMessage("");
 
     if (!resetEmail) {
       setResetError("Please enter your registered email address.");
@@ -92,9 +92,8 @@ export default function LoginPage() {
       if (!res.ok) {
         setResetError(data.error || "Account not found or failed to send OTP.");
       } else {
-        if (data.code) {
-          setOtpBanner(`Your OTP Code is: ${data.code} (Valid for 15 mins)`);
-        }
+        setInfoMessage(data.message || `An OTP code has been dispatched to ${resetEmail}. Please check your inbox!`);
+        setOtpCode(""); // Reset OTP input field
         setWizardStep(2);
       }
     } catch (err: any) {
@@ -110,7 +109,7 @@ export default function LoginPage() {
     setResetError("");
 
     if (!otpCode || otpCode.trim().length !== 6) {
-      setResetError("Please enter a valid 6-digit OTP code.");
+      setResetError("Please enter the 6-digit OTP code received in your email.");
       return;
     }
 
@@ -286,7 +285,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Forgot Password 3-Step Wizard Modal */}
+      {/* Secure 3-Step Password Reset Modal */}
       {showForgotModal && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 relative">
@@ -308,13 +307,13 @@ export default function LoginPage() {
 
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 {wizardStep === 1 && "Forgot Password"}
-                {wizardStep === 2 && "Enter OTP Code"}
+                {wizardStep === 2 && "Enter Email OTP"}
                 {wizardStep === 3 && "Set New Password"}
                 {wizardStep === 4 && "Password Reset Successful"}
               </h2>
 
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {wizardStep === 1 && "Step 1 of 3: Enter your registered email address to receive a 6-digit OTP code."}
+                {wizardStep === 1 && "Step 1 of 3: Enter your registered email address to receive your OTP code."}
                 {wizardStep === 2 && `Step 2 of 3: Enter the 6-digit OTP code sent to ${resetEmail}`}
                 {wizardStep === 3 && "Step 3 of 3: Enter your new password and confirm it."}
                 {wizardStep === 4 && "Your password has been updated! Click below to sign in."}
@@ -376,19 +375,19 @@ export default function LoginPage() {
               </form>
             )}
 
-            {/* STEP 2: Enter & Verify OTP */}
+            {/* STEP 2: Enter & Verify OTP from Email */}
             {wizardStep === 2 && (
               <form onSubmit={handleVerifyOTP} className="space-y-4">
-                {otpBanner && (
+                {infoMessage && (
                   <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold text-center flex items-center justify-center gap-2">
                     <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>{otpBanner}</span>
+                    <span>{infoMessage}</span>
                   </div>
                 )}
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Enter 6-Digit Security OTP
+                    Enter 6-Digit Email OTP
                   </label>
                   <div className="relative">
                     <KeyRound className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 dark:text-slate-500" />
@@ -396,7 +395,7 @@ export default function LoginPage() {
                       type="text"
                       required
                       maxLength={6}
-                      placeholder="e.g. 849201"
+                      placeholder="Enter 6-digit code"
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-mono text-sm tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -410,7 +409,7 @@ export default function LoginPage() {
                     onClick={() => setWizardStep(1)}
                     className="w-1/3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-1"
                   >
-                    <ArrowLeft className="w-3.5 h-3.5" /> Change Email
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
                   </button>
                   <button
                     type="submit"

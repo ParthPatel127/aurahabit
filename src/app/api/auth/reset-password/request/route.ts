@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       where: { email: normalizedEmail },
     });
 
-    // Save verification code to database
+    // Save verification code securely to database
     await prisma.passwordResetToken.create({
       data: {
         email: normalizedEmail,
@@ -47,12 +47,10 @@ export async function POST(req: Request) {
     // Dispatch real email via Nodemailer
     const emailResult = await sendOtpEmail(normalizedEmail, verificationCode);
 
+    // SECURE RESPONSE: Never leak or return the OTP code to the frontend client!
     return NextResponse.json({
       success: true,
-      message: emailResult.sent
-        ? `A 6-digit OTP code has been sent to ${normalizedEmail}. Please check your inbox!`
-        : `Verification code generated! (OTP: ${verificationCode})`,
-      code: verificationCode, // Available for instant preview/testing
+      message: `A 6-digit OTP code has been dispatched to ${normalizedEmail}. Please check your inbox!`,
       emailSent: emailResult.sent,
     });
   } catch (error: any) {
