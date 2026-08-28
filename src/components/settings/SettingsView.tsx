@@ -91,22 +91,62 @@ export function SettingsView({ habits, goals, plannerTasks }: { habits: any[]; g
 
   const handleTestClosedTabPush = async () => {
     try {
-      // Trigger background VAPID Web Push after 3 seconds delay so user can close tab to test
-      alert("Closed-Tab Test Triggered! Click OK and CLOSE THIS TAB right now within 3 seconds.");
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        alert("Push notifications are not supported on this browser context.");
+        return;
+      }
+
+      if (Notification.permission !== "granted") {
+        const perm = await Notification.requestPermission();
+        if (perm !== "granted") {
+          alert("Notification permission denied! Please allow notifications in site settings.");
+          return;
+        }
+      }
+
+      // Ensure push subscription is refreshed in PostgreSQL before test push
+      const reg = await navigator.serviceWorker.ready;
+      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BF2mwhYFvnkCk2K9b8SBfu5l2KwzJ2T8ugWAWIHr_PssXJCUlsrpQlEn6yBCq2BQjNItim9uRqSOIek4Ar2CTQc";
+      const padding = "=".repeat((4 - (vapidPublicKey.length % 4)) % 4);
+      const base64 = (vapidPublicKey + padding).replace(/\-/g, "+").replace(/_/g, "/");
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: outputArray,
+        });
+      }
+
+      if (sub) {
+        await fetch("/api/notifications/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscription: sub }),
+        });
+      }
+
+      alert("Closed-Tab Test Triggered! Click OK and CLOSE THIS TAB right now within 5 seconds.");
       setTimeout(async () => {
         await fetch("/api/notifications/send-push", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: "Closed-Tab Push Test 🚀",
-            body: "Success! You received this notification via VAPID Web Push while the app tab was CLOSED!",
+            body: "Success! You received this notification via Web Push while the app tab was CLOSED!",
             tag: "closed_tab_test",
             url: "/dashboard",
           }),
         });
-      }, 3000);
-    } catch (e) {
-      console.error(e);
+      }, 5000);
+    } catch (e: any) {
+      console.error("Test closed-tab push error:", e);
+      alert("Error setting up closed-tab push: " + (e.message || e));
     }
   };
 

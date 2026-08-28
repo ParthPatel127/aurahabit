@@ -134,6 +134,13 @@ export function NotificationScheduler() {
   useEffect(() => {
     if (status !== "authenticated") return;
 
+    // Ensure VAPID Push Subscription is saved in PostgreSQL for authenticated user
+    if ("serviceWorker" in navigator && "Notification" in window && Notification.permission === "granted") {
+      navigator.serviceWorker.ready.then((reg) => {
+        subscribeToPushNotifications(reg);
+      });
+    }
+
     const checkAndTriggerNotifications = async () => {
       try {
         const res = await fetch("/api/habits");
