@@ -95,29 +95,6 @@ docker compose up
 
 ---
 
-## ⚙️ Environment Configuration (`.env`)
-
-```env
-# Database Configuration
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/aurahabit?schema=public"
-
-# NextAuth Authentication
-NEXTAUTH_SECRET="super-secret-habit-tracker-key-2026"
-NEXTAUTH_URL="http://localhost:3000"
-
-# Real Email OTP Delivery Settings (Gmail SMTP / App Password)
-SMTP_HOST="smtp.gmail.com"
-SMTP_PORT="465"
-SMTP_USER="aurahabitwebapp@gmail.com"
-SMTP_PASS="vprb ubcb gnnt jexg"
-EMAIL_FROM="AuraHabit Support <aurahabitwebapp@gmail.com>"
-
-# Optional: Resend Email API Key
-RESEND_API_KEY=""
-```
-
----
-
 ## 🛠️ Tech Stack & Architecture
 
 - **Framework**: Next.js 15 (App Router & Server Actions)
