@@ -28,6 +28,7 @@ export async function GET(req: Request) {
         user: {
           include: {
             pushSubscriptions: true,
+            settings: true,
           },
         },
         completions: {
@@ -39,6 +40,11 @@ export async function GET(req: Request) {
     let notificationsSent = 0;
 
     for (const habit of habits) {
+      // Respect user setting preference
+      if (habit.user.settings && habit.user.settings.reminderNotifications === false) {
+        continue;
+      }
+
       const isCompletedToday = habit.completions.some((c) => c.completed);
       if (isCompletedToday) continue;
 

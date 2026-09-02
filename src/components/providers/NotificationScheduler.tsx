@@ -11,5 +11,22 @@ declare global {
 }
 
 export function NotificationScheduler() {
-  return null;
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    window.sendDesktopNotification = (title: string, body: string) => {
+      if ("Notification" in window && Notification.permission === "granted") {
+        try {
+          new Notification(title, {
+            body,
+            icon: "/icons/icon-192.png",
+          });
+        } catch (e) {
+          console.error("Desktop notification failed:", e);
+        }
+      }
+    };
+  }, []);
+
+  return <NotificationToastContainer />;
 }
