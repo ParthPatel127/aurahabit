@@ -295,27 +295,31 @@ export function ReminderCard() {
           </div>
         </div>
 
-        {/* Featured Live Goal Preparation Hero Banner */}
+        {/* Featured Live Goal Preparation Hero Banner with Blinking Visual Reminder */}
         {featuredTarget && featuredCountdown && featuredCountdown.status !== "overdue" && (
-          <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-emerald-500/20 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-inner">
+          <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-emerald-500/20 border-2 border-amber-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg shadow-amber-500/10 animate-pulse">
             <div>
-              <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+              <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                </span>
                 <Flame className="w-4 h-4 text-orange-500 animate-bounce" />
-                <span>Next Upcoming Goal Preparation Target</span>
+                <span className="text-amber-900 dark:text-amber-200">Active Goal Preparation Target (Live Reminder)</span>
               </div>
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 mt-0.5">
+              <h3 className="text-base font-black text-slate-900 dark:text-slate-100 mt-0.5">
                 {featuredTarget.title}
               </h3>
-              <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2 mt-0.5 font-medium">
                 <span>{featuredTarget.dayOfWeek}, {featuredTarget.date}</span>
                 <span>•</span>
                 <span>{featuredTarget.time}</span>
               </p>
             </div>
 
-            {/* Live Ticking Countdown Counter */}
-            <div className="px-4 py-2 rounded-xl bg-slate-900 text-amber-400 border border-amber-500/40 font-mono font-extrabold text-sm sm:text-base flex items-center gap-2 shrink-0 shadow-lg">
-              <Timer className="w-4 h-4 text-amber-400 animate-spin-slow" />
+            {/* Live Ticking & Blinking Countdown Counter */}
+            <div className="px-4 py-2.5 rounded-xl bg-slate-900 text-amber-300 border-2 border-amber-400/60 font-mono font-black text-base sm:text-lg flex items-center gap-2 shrink-0 shadow-xl shadow-amber-500/20 animate-pulse">
+              <Timer className="w-5 h-5 text-amber-400 animate-spin-slow" />
               <span>{featuredCountdown.formattedCountdown}</span>
             </div>
           </div>
@@ -329,7 +333,7 @@ export function ReminderCard() {
             </div>
           ) : filteredReminders.length === 0 ? (
             <div className="py-8 text-center bg-white/40 dark:bg-slate-900/40 rounded-xl border border-dashed border-amber-500/20">
-              <Timer className="w-8 h-8 text-amber-500/40 mx-auto mb-2" />
+              <Timer className="w-8 h-8 text-amber-500/40 mx-auto mb-2 animate-pulse" />
               <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 {filter === "active"
                   ? "No active preparation targets or reminders!"
@@ -353,10 +357,10 @@ export function ReminderCard() {
                       item.completed
                         ? "bg-slate-100/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-70"
                         : countdown.status === "urgent"
-                        ? "bg-amber-500/10 dark:bg-amber-950/20 border-amber-500/40 shadow-sm"
+                        ? "bg-amber-500/15 dark:bg-amber-950/30 border-2 border-amber-500/50 shadow-md animate-pulse"
                         : countdown.status === "overdue"
                         ? "bg-rose-500/10 dark:bg-rose-950/20 border-rose-500/30"
-                        : "bg-white/80 dark:bg-slate-900/80 border-amber-500/20 shadow-sm hover:shadow-md"
+                        : "bg-white/80 dark:bg-slate-900/80 border-amber-500/30 shadow-sm hover:shadow-md"
                     }`}
                   >
                     <div className="flex items-start gap-3 overflow-hidden">
@@ -374,7 +378,7 @@ export function ReminderCard() {
 
                       <div className="overflow-hidden">
                         <h4
-                          className={`text-xs font-bold text-slate-900 dark:text-slate-100 leading-snug truncate ${
+                          className={`text-xs font-extrabold text-slate-900 dark:text-slate-100 leading-snug truncate ${
                             item.completed ? "line-through text-slate-400 dark:text-slate-500" : ""
                           }`}
                         >
@@ -389,22 +393,22 @@ export function ReminderCard() {
 
                         {/* Date, Time, Day, and Live Remaining Time Ticker */}
                         <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                          {/* Live Countdown Badge */}
+                          {/* Live Countdown Badge with Blinking Effect */}
                           <span
                             className={`px-2 py-0.5 rounded-md font-mono font-extrabold text-[10px] flex items-center gap-1 border ${
                               item.completed
                                 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                                 : countdown.status === "urgent"
-                                ? "bg-amber-500/20 text-amber-900 dark:text-amber-200 border-amber-500/40 animate-pulse"
+                                ? "bg-amber-500/25 text-amber-950 dark:text-amber-100 border-amber-500/50 animate-pulse shadow-sm"
                                 : countdown.status === "overdue"
                                 ? "bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30"
-                                : "bg-teal-500/15 text-teal-800 dark:text-teal-300 border-teal-500/20"
+                                : "bg-teal-500/20 text-teal-900 dark:text-teal-200 border-teal-500/30 animate-pulse"
                             }`}
                           >
                             {countdown.status === "urgent" ? (
-                              <AlertTriangle className="w-3 h-3 text-amber-500" />
+                              <AlertTriangle className="w-3 h-3 text-amber-500 animate-bounce" />
                             ) : (
-                              <Timer className="w-3 h-3 text-emerald-500" />
+                              <Timer className="w-3 h-3 text-emerald-500 animate-spin-slow" />
                             )}
                             {countdown.formattedCountdown}
                           </span>
