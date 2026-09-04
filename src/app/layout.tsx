@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "AuraHabit - Premium Habit Tracker SaaS & Goal Management",
-  description: "Production-grade Habit Tracker, Goal Tracker, Bhagavad Gita Daily Inspiration inspired by Notion, Habitify & TickTick.",
+  description: "Production-grade Habit Tracker, Goal Tracker, Smart Scheduled Reminders with Date, Time and Day tracking inspired by Notion, Habitify & TickTick.",
   manifest: "/manifest.json",
   icons: {
     icon: [

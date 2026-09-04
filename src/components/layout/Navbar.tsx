@@ -1,16 +1,16 @@
 "use client";
 
 import { useTheme } from "@/components/providers/ThemeProvider";
-import { Sun, Moon, Sparkles, Plus, Calendar } from "lucide-react";
+import { Sun, Moon, Bell, Plus, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { HabitModal } from "@/components/habits/HabitModal";
-import { GitaModal } from "@/components/dashboard/GitaModal";
+import { ReminderModal } from "@/components/dashboard/ReminderModal";
 
 export function Navbar({ title }: { title: string }) {
   const { theme, toggleTheme } = useTheme();
   const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
-  const [isGitaModalOpen, setIsGitaModalOpen] = useState(false);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const todayFormatted = format(new Date(), "EEEE, MMMM d, yyyy");
 
   return (
@@ -25,14 +25,14 @@ export function Navbar({ title }: { title: string }) {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Workable Gita Inspiration Button */}
+          {/* Quick Add Reminder Button */}
           <button
-            onClick={() => setIsGitaModalOpen(true)}
-            className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-sm"
-            title="Click to view Bhagavad Gita Verse of the Day & Mindset Insights"
+            onClick={() => setIsReminderModalOpen(true)}
+            className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-semibold transition-all active:scale-95 cursor-pointer shadow-sm"
+            title="Create a new scheduled reminder with Date, Time, and Day"
           >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Bhagavad Gita Verse of the Day</span>
+            <Bell className="w-3.5 h-3.5 text-amber-500" />
+            <span>Add Reminder</span>
           </button>
 
           {/* Quick Create Habit Button */}
@@ -55,11 +55,15 @@ export function Navbar({ title }: { title: string }) {
         </div>
       </header>
 
-      {/* Gita Wisdom Modal */}
-      {isGitaModalOpen && (
-        <GitaModal
-          isOpen={isGitaModalOpen}
-          onClose={() => setIsGitaModalOpen(false)}
+      {/* Reminder Modal */}
+      {isReminderModalOpen && (
+        <ReminderModal
+          isOpen={isReminderModalOpen}
+          onClose={() => setIsReminderModalOpen(false)}
+          onSuccess={() => {
+            setIsReminderModalOpen(false);
+            window.location.reload();
+          }}
         />
       )}
 
@@ -77,3 +81,4 @@ export function Navbar({ title }: { title: string }) {
     </>
   );
 }
+

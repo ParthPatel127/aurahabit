@@ -26,6 +26,7 @@ model User {
   visionItems      VisionBoardItem[]
   settings         UserSettings?
   pushSubscriptions PushSubscription[]
+  reminders        Reminder[]
 }
 
 model HabitCategory {
@@ -211,5 +212,19 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([email, code])
+}
+
+model Reminder {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  date        String   // YYYY-MM-DD
+  time        String   // e.g. "09:00 AM" or "14:30"
+  dayOfWeek   String   // e.g. "Monday", "Friday"
+  completed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 

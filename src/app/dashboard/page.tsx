@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { GitaQuoteCard } from "@/components/dashboard/GitaQuoteCard";
+import { ReminderCard } from "@/components/dashboard/ReminderCard";
 import { KPICards } from "@/components/dashboard/KPICards";
 import { QuickCheckIn } from "@/components/dashboard/QuickCheckIn";
 import { StreakHeatmap } from "@/components/dashboard/StreakHeatmap";
@@ -55,8 +55,8 @@ export default function DashboardPage() {
 
   return (
     <AppShell title="Executive Dashboard">
-      {/* Gita Verse of the Day */}
-      <GitaQuoteCard />
+      {/* Smart Scheduled Reminders with Date, Time, and Day */}
+      <ReminderCard />
 
       {/* KPI Stats Cards - 100% Real Exact Math */}
       <KPICards data={kpiData} />

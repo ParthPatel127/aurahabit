@@ -7,7 +7,7 @@
 [![Prisma](https://img.shields.io/badge/Prisma-5.22-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.4-38BDF8?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 
-AuraHabit is a feature-rich, high-performance, production-grade Habit Tracker and Goal Management SaaS application inspired by Notion, Habitify, TickTick, and executive Excel habit tracking systems. It features a complete 3-step Email OTP security architecture, 365 Bhagavad Gita daily inspiration quotes, interactive analytics, priority execution planning, hydration/fitness/study trackers, and full PWA support.
+AuraHabit is a feature-rich, high-performance, production-grade Habit Tracker and Goal Management SaaS application inspired by Notion, Habitify, TickTick, and executive Excel habit tracking systems. It features a complete 3-step Email OTP security architecture, smart scheduled reminders with Date/Time/Day tracking, interactive analytics, priority execution planning, hydration/fitness/study trackers, and full PWA support.
 
 ---
 
@@ -38,7 +38,7 @@ AuraHabit includes an enterprise-grade authentication system built with NextAuth
 
 ## ⚡ Quick Start & Local Setup
 
-The repository is completely self-contained and automatically initializes the database, runs migrations, seeds 365 Bhagavad Gita quotes, and boots up the server in a single command!
+The repository is completely self-contained and automatically initializes the database, runs migrations, and boots up the server in a single command!
 
 ### Standard Startup (Local & Wi-Fi Network Ready)
 ```bash
@@ -60,6 +60,7 @@ The server binds to `0.0.0.0:3000` so any phone, tablet, or device connected to 
 
 ### 🐳 Docker Container Startup
 ```bash
+# Docker startup
 docker compose up
 ```
 
@@ -73,8 +74,9 @@ docker compose up
 - **Yearly Habit Matrix**: Notion/Excel-inspired monthly grid (Days 1–31) across Jan–Dec with 1-click completion toggles and instant compliance computation.
 - **Streak & Achievement Badges**: Automatic streak engine with visual achievement badges 🔥 (7, 30, 50, 100, 365 Days).
 
-### 🕉️ 2. 365 Bhagavad Gita Daily Inspiration
-- Pre-seeded database featuring 365 authentic Sanskrit verses, English translations, and Chapter/Verse numbers that automatically rotate daily.
+### 🔔 2. Smart Scheduled Reminders (Date, Time & Day)
+- Integrated Reminders widget with live clock and calendar displaying current **Date, Time, and Day of the Week** (e.g. `Friday, September 4, 2026 at 03:45 PM`).
+- Schedule reminders with explicit Date, Time, and Day of Week badges, toggle completion status, and filter pending vs completed tasks.
 
 ### 📈 3. Recharts Analytics Suite
 - Visual graphs for daily and weekly completion trends, category distribution pie charts, and long-term consistency metrics.
